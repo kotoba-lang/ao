@@ -1,0 +1,2 @@
+;; Classpath for nbb. Prefer `npm test` over a task runner.
+{:paths ["src" "test"]}

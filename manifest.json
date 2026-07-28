@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "handle": "ao",
+  "kind": "lib",
+  "title": "artificial-organism model",
+  "description": "The portable AO model extracted from kotoba-lang/tamaki: the AgentRun contract and its state machine, finite organism lineage with governed succession, and human-in-the-loop capability policy. Model only — no CLI, no runner, no storage.",
+  "runtime": "nbb|jvm",
+  "tier": "L2",
+  "extracted-from": {
+    "repo": "kotoba-lang/tamaki",
+    "namespaces": ["kotoba.tamaki.model", "kotoba.tamaki.lineage", "kotoba.tamaki.actor"],
+    "adr": ["tamaki ADR-0001", "tamaki ADR-0002"]
+  },
+  "not-owned-here": {
+    "capability-contract": "kotoba-lang/kotoba-core-contracts already owns vocabulary, ABI, effect classes and validation; kotoba.tamaki.capability is only an adapter over it and was deliberately NOT copied.",
+    "execution": "runner pool, node dispatch, reconcile plan, murakumo and kotoba-code integration stay in tamaki."
+  },
+  "entities": ["AgentRun", "Organism", "Succession", "Policy"]
+}
