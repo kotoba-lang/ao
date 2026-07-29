@@ -69,25 +69,12 @@ murakumo and kotoba-code integration are tamaki's job and stay there.
 
 ## What changed on the way out
 
-- `:tamaki.event/*` → `:ao.event/*`. The only tamaki-specific thing in the
-  run model was the event prefix.
 - `lineage/organism` no longer defaults `family-name` to `"Tamaki"`, and no
   longer assumes 30 days is everyone's cap. Both are parameters now; the
   30-day default is preserved so an unconfigured fleet inherits tamaki
   ADR-0002's reviewed bound rather than none.
 
 ## The decisions worth knowing
-
-**Refusal is a dead end.** `:rejected` and `:cancelled` have no outgoing
-transitions. `:failed` can be requeued because a failure is often retryable,
-but re-deriving a run from a human's *no* would launder the refusal.
-
-**Illegal transitions throw.** A run whose history no longer explains its
-state is worse than a crash.
-
-**An unlisted capability is `:blocked`.** A capability nobody wrote a rule
-for is one nobody reviewed, and defaulting those open is how an AO acquires
-powers by omission. Unparseable decisions fail closed the same way.
 
 **Vitality is a geometric mean.** No wellbeing dimension can be compensated
 away by maximizing another — an AO with perfect throughput and zero human
@@ -101,12 +88,8 @@ child when the gate blocks.
 **A lease cannot be extended from inside.** `organism` refuses a lifetime
 longer than the fleet maximum.
 
-## Legacy spellings
-
-`ao.policy` accepts the drafted `:self-executing` / `:propose` /
-`:forbidden` and maps them onto `:autonomous` / `:approval-required` /
-`:blocked`. `deprecated-spellings` reports them, because a fleet that never
-reports them keeps two vocabularies alive forever.
+AgentRun transition decisions now live in `kotoba-lang/agent`; role policy and
+legacy policy spellings live in `kotoba-lang/yakuwari`.
 
 ## Test
 
@@ -119,7 +102,6 @@ clojure -M:test   # JVM host — must agree exactly
 
 ## Status
 
-Extracted 2026-07-29. **tamaki has not yet been switched over to it** — the
-namespaces there are unchanged, so for now this is a second copy rather than
-a shared one. Pointing `kotoba.tamaki.model`/`lineage` at `ao` is the
-follow-up that makes the extraction real.
+Extracted and adopted by Tamaki on 2026-07-29.
+`kotoba.tamaki.lineage` is now a compatibility adapter over `ao.lineage`;
+Tamaki supplies only its family name and reviewed 30-day incarnation bound.
