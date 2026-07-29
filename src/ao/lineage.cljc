@@ -8,10 +8,15 @@
   Both are now parameters — the *shape* of the decision is shared, the
   values belong to whoever runs the fleet.
 
-  The premise this encodes: an AO's continuity is the governed transmission
-  of what it learned to a human-approved successor, not indefinite process
-  survival. Expiry is therefore an immutable lease boundary rather than a
-  soft warning."
+  The lease belongs to an **incarnation**, not to the AO. tamaki ADR-0001 is
+  explicit that a maximum-30-day named life is an incarnation stewarding an
+  AO, and is not the repository-bound AO itself. That AO persists —
+  archiving makes it dormant, never gone (see `ao.identity`). What expires
+  is the named individual currently stewarding it.
+
+  Why only this layer has a lease at all: an AO rewrites its own definition,
+  so no bound it could edit is a bound. A temporal one is the only kind that
+  survives self-modification. See `ao.evolution`."
   (:require [clojure.string :as str]))
 
 (def day-ms 86400000)

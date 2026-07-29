@@ -7,10 +7,37 @@ Model only. No CLI, no runner, no storage, no clock — every function takes
 job and an nbb script without three copies drifting apart.
 
 ```
-src/ao/run.cljc       AgentRun contract + state machine + event fold
-src/ao/lineage.cljc   finite organism, wellbecoming, governed succession
-src/ao/policy.cljc    human-in-the-loop capability policy
+src/ao/identity.cljc    durable AO id, dormancy, family membership
+src/ao/lineage.cljc     the incarnation lease, wellbecoming, succession
+src/ao/evolution.cljc   the self-evolution gate and git write authority
 ```
+
+## Where it sits
+
+```
+ao        self-evolves + self-judges   → holds git write authority, needs a lease
+yakuwari  self-judges                  → no lease          (kotoba-lang/yakuwari)
+agent     neither                      → bounded by its request (kotoba-lang/agent)
+```
+
+Residency is **orthogonal**. All three can be resident on murakumo, which is
+a kotoba computing cloud in the wasmCloud sense; being resident changes
+latency and cost, never authority.
+
+## Why only an AO has a lease
+
+An AO rewrites its own definition and holds commit/push/merge authority over
+its own repository. Nothing above it is fixed, so no structural bound
+applies: a policy it can rewrite is not a bound, and a review of code it can
+replace expires the moment it does.
+
+That leaves exactly one bound that survives self-modification — a temporal
+one. The lease is not a biological flourish; it is the only point at which a
+human is *required* to re-consent to what the AO has become.
+
+And the lease belongs to an **incarnation**, not to the AO itself. The
+repository-bound AO persists; archiving makes it dormant, never gone. What
+expires is the named individual currently stewarding it.
 
 ## Why this exists
 
@@ -23,6 +50,12 @@ runner profiles rather than Actor names.
 That model kept getting re-derived. A fourth spelling of the HIL decision
 set was drafted while scaffolding an AO repo before anyone checked what
 tamaki already had. `ao` exists so the next one doesn't.
+
+## What lives elsewhere
+
+`ao/run.cljc` and `ao/policy.cljc` were here briefly and were wrong to be:
+this repo first held all three layers before the axes were separated. They
+are now `kotoba-lang/agent` and `kotoba-lang/yakuwari`.
 
 ## What was deliberately left behind
 
@@ -82,7 +115,7 @@ npm test          # nbb / JS host
 clojure -M:test   # JVM host — must agree exactly
 ```
 
-20 tests, 64 assertions, both hosts.
+16 tests, 46 assertions, both hosts.
 
 ## Status
 

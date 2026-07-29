@@ -1,75 +1,100 @@
 (ns ao.core-test
   (:require [clojure.test :refer [deftest is testing]]
-            [ao.run :as run]
+            [ao.identity :as ident]
             [ao.lineage :as lineage]
-            [ao.policy :as policy]))
+            [ao.evolution :as evo]))
 
 (def t0 1785000000000)
 
-;; ───────────────────────────── run ─────────────────────────────
+;; ─────────────────────────── identity ───────────────────────────
 
-(deftest a-run-needs-a-stated-goal
-  (testing "a run with no goal cannot be reviewed or explained afterwards"
-    (is (thrown? #?(:clj Exception :cljs js/Error)
-                 (run/agent-run {:goal "   "} t0)))
-    (is (thrown? #?(:clj Exception :cljs js/Error)
-                 (run/agent-run {} t0)))))
+(deftest an-ao-name-is-derived-not-assigned
+  (is (= "ao:github:network-awai/person-awai-ryo"
+         (ident/ao-id "network-awai" "person-awai-ryo")))
+  (is (= {:ao/org "network-awai" :ao/repo "person-awai-ryo"}
+         (ident/parse-id "ao:github:network-awai/person-awai-ryo")))
+  (testing "an id that is not derivable from a repo slug is not an AO id"
+    (is (not (ident/valid-id? "ao:github:no-repo")))
+    (is (not (ident/valid-id? "person-awai-ryo")))
+    (is (thrown? #?(:clj Exception :cljs js/Error) (ident/ao-id "org" "")))))
 
-(deftest a-new-run-is-queued-and-bounded
-  (let [r (run/agent-run {:goal "make the tests pass"} t0)]
-    (is (= :queued (:agent.run/status r)))
-    (is (zero? (:agent.run/attempt r)))
-    (testing "budget defaults are merged, not replaced"
-      (is (= 12 (get-in r [:agent.run/budget :max-turns])))
-      (is (= 1200000 (get-in r [:agent.run/budget :deadline-ms]))))
-    (testing "a caller override keeps the other ceilings"
-      (let [r2 (run/agent-run {:goal "g" :budget {:max-turns 3}} t0)]
-        (is (= 3 (get-in r2 [:agent.run/budget :max-turns])))
-        (is (= 30 (get-in r2 [:agent.run/budget :max-tool-calls])))))))
+(deftest archiving-makes-an-ao-dormant-never-deleted
+  (testing "an archived repository still has history someone may answer for"
+    (let [live (ident/organism {:org "o" :repo "r"})
+          arch (ident/organism {:org "o" :repo "r" :archived? true})]
+      (is (= :active (:ao/state live)))
+      (is (ident/dormant? arch))
+      (is (= (:ao/id live) (:ao/id arch)) "identity survives archival")
+      (is (not (contains? ident/states :deleted))))))
 
-(deftest leasing-counts-an-attempt
-  (let [r (-> (run/agent-run {:goal "g"} t0)
-              (run/transition :leased t0 {}))]
-    (is (= 1 (:agent.run/attempt r)))
-    (is (= 2 (:agent.run/attempt (run/transition
-                                  (run/transition r :queued t0 {})
-                                  :leased t0 {}))))))
+(deftest family-membership-is-a-rule-over-an-inventory
+  (testing "a curated list drifts the moment someone forgets to update it"
+    (let [repos [{:org "network-awai" :repo "a"}
+                 {:org "network-awai" :repo "b" :archived? true}
+                 {:org "kotoba-lang" :repo "ao"}]
+          fam (ident/family-members repos {:org "network-awai"})]
+      (is (= 2 (count fam)))
+      (is (= #{"a" "b"} (set (map :ao/repo fam))))
+      (testing "dormant members stay members"
+        (is (some ident/dormant? fam))))))
 
-(deftest illegal-transitions-throw-rather-than-corrupt
-  (testing "a run whose history stops explaining its state is worse than a crash"
-    (let [r (run/agent-run {:goal "g"} t0)]
-      (is (thrown? #?(:clj Exception :cljs js/Error)
-                   (run/transition r :running t0 {})))
-      (is (thrown? #?(:clj Exception :cljs js/Error)
-                   (run/transition r :succeeded t0 {}))))))
+;; ─────────────────────────── evolution ───────────────────────────
 
-(deftest refusal-is-a-dead-end
-  (testing ":rejected and :cancelled have no way out — re-deriving a run
-            from a human's no would launder the refusal"
-    (is (empty? (get run/transitions :rejected)))
-    (is (empty? (get run/transitions :cancelled))))
-  (testing ":failed can be requeued, because a failure is often retryable"
-    (is (= #{:queued} (get run/transitions :failed)))))
+(def healthy-wb (zipmap lineage/wellbeing-dimensions (repeat 0.9)))
 
-(deftest folding-ignores-non-run-events
-  (testing "loop/actor/audit events share the stream but must not become runs"
-    (let [r (run/agent-run {:goal "g" :id "run-1"} t0)
-          events [(assoc (run/event r :run/submitted t0 {:run r}) :ao.event/run "run-1")
-                  {:ao.event/run nil :ao.event/kind :loop/tick :ao.event/at t0}]
-          folded (run/fold-events events)]
-      (is (= 1 (count folded)))
-      (is (contains? folded "run-1"))
-      (is (not (contains? folded nil))))))
+(defn inc-at [now] (lineage/organism {:family-name "awai" :given-name "hikari"} now))
 
-(deftest resumable-and-active-classification
-  (let [mk (fn [s] (assoc (run/agent-run {:goal "g"} t0) :agent.run/status s))]
-    (is (run/resumable? (mk :failed)))
-    (is (run/resumable? (mk :checkpointed)))
-    (is (run/resumable? (mk :held)))
-    (is (not (run/resumable? (mk :succeeded))))
-    (is (run/active? (mk :running)))
-    (is (not (run/active? (mk :cancelled))))
-    (is (run/terminal? (mk :rejected)))))
+(deftest merge-authority-is-separate-from-push
+  (testing "merging is what makes a change official; an AO that can merge its
+            own work has no reviewer left"
+    (let [pusher {:ao/write-scope :push}]
+      (is (evo/may-write? pusher :commit))
+      (is (evo/may-write? pusher :push))
+      (is (not (evo/may-write? pusher :merge))))))
+
+(deftest an-expired-incarnation-cannot-argue-past-the-lease
+  (let [i (inc-at t0)
+        late (+ t0 (* 31 lineage/day-ms))]
+    (is (= :expired (evo/gate {:ao {:ao/write-scope :merge}
+                               :incarnation i :now-ms late
+                               :wellbecoming healthy-wb
+                               :change {:change/scope :commit}})))))
+
+(deftest self-modification-requires-write-scope
+  (is (= :insufficient-write-scope
+         (evo/gate {:ao {:ao/write-scope :commit}
+                    :incarnation (inc-at t0) :now-ms t0
+                    :wellbecoming healthy-wb
+                    :change {:change/scope :merge}}))))
+
+(deftest editing-the-terms-of-its-own-supervision-needs-a-signed-human
+  (let [base {:ao {:ao/write-scope :merge}
+              :incarnation (inc-at t0) :now-ms t0
+              :wellbecoming healthy-wb}]
+    (testing "ordinary work proceeds"
+      (is (= :allowed (evo/gate (assoc base :change {:change/scope :merge})))))
+    (testing "a governing change does not"
+      (is (= :approval-required
+             (evo/gate (assoc base :change {:change/scope :merge
+                                            :change/governing? true}))))
+      (is (= :allowed
+             (evo/gate (assoc base :change {:change/scope :merge
+                                            :change/governing? true}
+                              :human-consent? true
+                              :consent-signature "sig")))))))
+
+(deftest governing-paths-are-recognised
+  (is (evo/governing-change? ["actor.edn"]))
+  (is (evo/governing-change? ["src/x.cljc" "docs/policy.md"]))
+  (is (evo/governing-change? ["config/capabilities.edn"]))
+  (is (not (evo/governing-change? ["README.md" "src/util.cljc"]))))
+
+(deftest low-human-agency-stops-self-modification-too
+  (is (= :repair-relationship
+         (evo/gate {:ao {:ao/write-scope :merge}
+                    :incarnation (inc-at t0) :now-ms t0
+                    :wellbecoming (assoc healthy-wb :human-agency 0.2)
+                    :change {:change/scope :commit}}))))
 
 ;; ─────────────────────────── lineage ───────────────────────────
 
@@ -150,45 +175,3 @@
     (is (= :approved (:succession/status approved)))
     (is (= 2 (get-in approved [:succession/child :organism/generation])))
     (is (= (:organism/id parent) (get-in approved [:succession/child :organism/parent])))))
-
-;; ──────────────────────────── policy ────────────────────────────
-
-(deftest an-unlisted-capability-is-blocked
-  (testing "defaulting unreviewed capabilities open is how an AO gains
-            powers by omission"
-    (is (= :blocked (policy/decide {} :mail.send)))
-    (is (not (policy/may-execute? {} :anything)))))
-
-(deftest legacy-spellings-resolve-and-are-reported
-  (let [p {:mail.inbound :self-executing
-           :mail.send :propose
-           :account.create :forbidden
-           :prolific.read :autonomous}]
-    (is (= :autonomous (policy/decide p :mail.inbound)))
-    (is (= :approval-required (policy/decide p :mail.send)))
-    (is (= :blocked (policy/decide p :account.create)))
-    (testing "the drafted fourth vocabulary is reported so it can die"
-      (is (= 3 (count (policy/deprecated-spellings p))))
-      (is (empty? (policy/deprecated-spellings {:a :autonomous}))))))
-
-(deftest unknown-decisions-fail-closed
-  (testing "a policy nobody can parse must not read as permission"
-    (is (= :blocked (policy/decide {:x :whatever} :x)))
-    (is (= :blocked (policy/normalize-decision nil)))))
-
-(deftest strictest-wins-when-rules-overlap
-  (is (= :blocked (policy/strictest-of [:autonomous :blocked])))
-  (is (= :approval-required (policy/strictest-of [:autonomous :approval-required])))
-  (is (= :approval-required (policy/strictest-of [:self-executing :propose])))
-  (is (= :blocked (policy/strictest-of []))))
-
-(deftest voice-required-is-not-quietly-autonomous
-  (let [p {:x :voice-required}]
-    (is (not (policy/may-execute? p :x)))
-    (is (not (policy/needs-human? p :x)))))
-
-(deftest validate-reports-every-problem-at-once
-  (let [r (policy/validate-policy {:a :nonsense :b :also-nonsense :c :autonomous})]
-    (is (not (:ok? r)))
-    (is (= 2 (count (:problems r)))))
-  (is (:ok? (policy/validate-policy {:a :autonomous :b :propose}))))
