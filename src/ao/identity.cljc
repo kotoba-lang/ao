@@ -11,7 +11,7 @@
   dormant AO remains a member of its family. That distinction matters
   operationally: 'no process running' and 'no longer exists' need different
   answers from anything reconciling a fleet."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (def id-re #"^ao:github:([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)$")
 
