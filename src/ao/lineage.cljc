@@ -17,7 +17,7 @@
   Why only this layer has a lease at all: an AO rewrites its own definition,
   so no bound it could edit is a bound. A temporal one is the only kind that
   survives self-modification. See `ao.evolution`."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (def day-ms 86400000)
 
@@ -55,8 +55,8 @@
                        {:lifetime-ms lifetime-ms :maximum-ms max-lifetime-ms})))
      {:organism/version 1
       :organism/id (or id
-                       (str (str/lower-case family-name) "-"
-                            (str/lower-case given-name) "-"
+                       (str (str/lower family-name) "-"
+                            (str/lower given-name) "-"
                             generation))
       :organism/family-name family-name
       :organism/given-name given-name
