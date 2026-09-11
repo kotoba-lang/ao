@@ -95,7 +95,7 @@ legacy policy spellings live in `kotoba-lang/yakuwari`.
 
 ```sh
 npm test          # nbb / JS host
-clojure -M:test   # JVM host — must agree exactly
+kbb -M:test   # JVM host — must agree exactly
 ```
 
 16 tests, 46 assertions, both hosts.
