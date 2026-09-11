@@ -7,9 +7,9 @@ Model only. No CLI, no runner, no storage, no clock — every function takes
 job and an nbb script without three copies drifting apart.
 
 ```
-src/ao/identity.cljc    durable AO id, dormancy, family membership
-src/ao/lineage.cljc     the incarnation lease, wellbecoming, succession
-src/ao/evolution.cljc   the self-evolution gate and git write authority
+src/ao/identity.cljk    durable AO id, dormancy, family membership
+src/ao/lineage.cljk     the incarnation lease, wellbecoming, succession
+src/ao/evolution.cljk   the self-evolution gate and git write authority
 ```
 
 ## Where it sits
