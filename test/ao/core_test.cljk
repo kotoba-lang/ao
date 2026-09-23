@@ -1,5 +1,5 @@
 (ns ao.core-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [ao.identity :as ident]
             [ao.lineage :as lineage]
             [ao.evolution :as evo]))
