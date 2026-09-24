@@ -1,0 +1,59 @@
+# Host-local blocks (command_allowlist, onboarding, secrets, skills, terminal) are kept on the host and omitted here.
+providers:
+  murakumo:
+    base_url: http://100.66.205.17:8096/v1
+    api_mode: chat_completions
+    stale_timeout_seconds: 600
+    request_timeout_seconds: 900
+  kotoba:
+    base_url: https://api.kotoba.cloud/v1
+    api_mode: chat_completions
+    key_env: KOTOBA_API_TOKEN
+    stale_timeout_seconds: 600
+    request_timeout_seconds: 900
+    models:
+      qwen3.8-27b-whitehacker:
+        context_length: 262144
+      qwen3.8-flash-next-whitehacker:
+        context_length: 131072
+model:
+  provider: kotoba
+
+  base_url: https://api.kotoba.cloud/v1
+  default: qwen3.8-27b-whitehacker
+
+  context_length: 262144
+  max_tokens: 8192
+auxiliary:
+  vision:
+    provider: kotoba
+    base_url: https://api.kotoba.cloud/v1
+    key_env: KOTOBA_API_TOKEN
+    model: qwen3.8-flash-next-whitehacker
+    reasoning_effort: none
+  compression:
+    base_url: https://api.kotoba.cloud/v1
+    model: qwen3.8-flash-next-whitehacker
+    context_length: 65536
+    provider: kotoba
+    reasoning_effort: none
+  title_generation:
+    provider: kotoba
+    base_url: https://api.kotoba.cloud/v1
+    model: qwen3.8-flash-next-whitehacker
+    reasoning_effort: none
+agent:
+  max_turns: 500
+plugins:
+  enabled: []
+_config_version: 45
+fallback_providers:
+  - provider: openrouter-free
+    model: z-ai/glm-5.3-flash
+    base_url: https://openrouter.ai/api/v1
+
+
+
+cron:
+  bot_chat_delivery_timeout_seconds: 900
+  max_parallel_jobs: 12
