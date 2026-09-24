@@ -1,0 +1,26 @@
+{
+  "jobs": [
+    {
+      "base_url": null,
+      "context_from": null,
+      "deliver": "local",
+      "enabled": true,
+      "enabled_toolsets": null,
+      "id": "bcacfbf2cf4b",
+      "model": null,
+      "name": "ao-review-probe",
+      "no_agent": true,
+      "prompt": "",
+      "provider": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "23 */2 * * *",
+        "display": "23 */2 * * *"
+      },
+      "script": "ao_review_probe.py",
+      "skill": null,
+      "skills": [],
+      "workdir": null
+    }
+  ]
+}
