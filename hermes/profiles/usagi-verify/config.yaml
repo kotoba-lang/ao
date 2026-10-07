@@ -1,6 +1,10 @@
 # Host-local blocks (command_allowlist, onboarding, secrets, skills, terminal) are kept on the host and omitted here.
 providers:
   murakumo:
+    models:
+      mishima:
+        context_length: 131072
+        max_tokens: 1024
     base_url: http://100.66.205.17:8096/v1
     api_mode: chat_completions
     stale_timeout_seconds: 600
@@ -46,6 +50,9 @@ plugins:
   enabled: []
 _config_version: 46
 fallback_providers:
+  - provider: murakumo
+    model: mishima
+    base_url: https://api.murakumo.cloud/v1
   - provider: openrouter-free
     model: z-ai/glm-5.3-flash
     base_url: https://openrouter.ai/api/v1
